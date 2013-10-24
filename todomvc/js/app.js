@@ -8,34 +8,39 @@ var app = app || {};
 $(function () {
 	'use strict';
 
-	app.Todo = Backbone.Model.extend({
+	app.PostType = Backbone.Model.extend({
 		defaults: {
-			title: '',
-			completed: false
+			postType: '',
+			source: false
 		},
 
 		idAttribute: 'id'
 	});
 
-	var Todos = Backbone.Collection.extend({
-		model: app.Todo,
+	var PostTypes = Backbone.Collection.extend({
+		model: app.PostType,
 
 		params: {
-			'action': 'get_todos'
+			'action': 'todos'
 		},
 
 		url: function() {
 			return ajaxurl + '?' + $.param( this.params );
+		},
+
+		parse: function( resp, xhr ) {
+			// console.log( 'Response: ', resp, xhr );
+			return resp.postTypes;
 		}
 
 	});
 
-	app.todos = new Todos();
+	app.todos = new PostTypes();
 
-	app.TodoView = Backbone.View.extend({
-		tagName:  'li',
+	app.PostTypeView = Backbone.View.extend({
+		tagName:  'tr',
 
-		className: 'list-group-item',
+		// className: 'list-group-item',
 
 		template: _.template($('#item-template').html()),
 
@@ -47,7 +52,7 @@ $(function () {
 			this.listenTo(this.model, 'destroy', this.remove);
 		},
 		render: function () {
-			this.$el.html(this.template(this.model.toJSON()));
+			this.$el.html( this.template( this.model.toJSON() ) );
 			return this;
 		},
 
@@ -76,16 +81,51 @@ $(function () {
 		},
 
 		addOne: function (todo) {
-			var view = new app.TodoView({ model: todo });
-			$('#todo-list').append(view.render().el);
+			var view = new app.PostTypeView({ model: todo });
+			$('#posttype-list').append(view.render().el);
 		},
 
 		addAll: function () {
-			this.$('#todo-list').html('');
+			this.$('#posttype-list').html('');
 			app.todos.each(this.addOne, this);
 		}
 	});
 
+	var PostTypeRouter = Backbone.Router.extend({
+		routes: {
+			'': 'index',
+			'edit/:id': 'editPostType',
+			'disable/:id': 'disablePostType'
+		},
+
+		index: function() {
+			console.log( 'Index page!' );
+		},
+
+		editPostType: function ( postType ) {
+			// Set the current filter to be used
+			app.PostTypeID = postType || '';
+
+			console.log( 'Edit post type: ', app.PostTypeID );
+			
+		},
+
+		disablePostType: function ( postType ) {
+			// Set the current filter to be used
+			app.PostTypeID = postType || '';
+
+			console.log( 'Disable post type: ', app.PostTypeID );
+			
+		}
+	});
+
+	app.PostTypeRouter = new PostTypeRouter();
+	Backbone.history.start({
+		root: '/wp-admin/options-general.php?page=todo-demo'
+	});
+
 	new app.AppView();
+
+
 });
 })( jQuery );

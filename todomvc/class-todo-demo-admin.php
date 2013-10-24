@@ -70,7 +70,7 @@ class Todo_Demo_Admin {
 		$plugin_basename = plugin_basename( plugin_dir_path( __FILE__ ) . 'plugin-name.php' );
 		add_filter( 'plugin_action_links_' . $plugin_basename, array( $this, 'add_action_links' ) );
 
-		add_action( 'wp_ajax_get_todos', array( $this, 'ajax_get_todos' ) );
+		add_action( 'admin_init', array( $this, 'ajax_get_todos' ) );
 
 	}
 
@@ -175,41 +175,63 @@ class Todo_Demo_Admin {
 	}
 
 	public function ajax_get_todos() {
-		$request_method = strtolower($_SERVER['REQUEST_METHOD']);
+		if ( defined('DOING_AJAX') && DOING_AJAX ) {
 
-		$model = json_decode( file_get_contents( "php://input" ) );
+			$action = $_GET['action'];
 
-		// var_dump( $request_method );
+			if ( strpos( $action, 'todos' ) !== 0 ) {
+				die();
+			}
 
-		$arrTodos = array();
-		$arrTodos[] = array( 'id' => 1, 'title' => 'Todo Item 1', 'completed' => false );
-		$arrTodos[] = array( 'id' => 2, 'title' => 'Todo Item 2', 'completed' => false );
-		$arrTodos[] = array( 'id' => 3, 'title' => 'Todo Item 3', 'completed' => true );
-		$arrTodos[] = array( 'id' => 4, 'title' => 'Todo Item 4', 'completed' => false );
-		$arrTodos[] = array( 'id' => 5, 'title' => 'Todo Item 5', 'completed' => false );
-		$arrTodos[] = array( 'id' => 6, 'title' => 'Todo Item 6', 'completed' => true );
-		$arrTodos[] = array( 'id' => 7, 'title' => 'Todo Item 7', 'completed' => true );
-		$arrTodos[] = array( 'id' => 8, 'title' => 'Todo Item 8', 'completed' => true );
-		switch ( $request_method ) {
-			case 'get':
-				echo json_encode( $arrTodos );
-				break;
-			case 'post':
-				echo json_encode( array( 'post' => $model ) );
-				break;
-			case 'put':
-				echo json_encode( 'put' );
-				break;
-			case 'delete':
-				echo json_encode( array( 'delete' => $model ) );
-				break;
-			default:
-				echo json_encode( $arrTodos );
-				break;
+			$request_method = strtolower($_SERVER['REQUEST_METHOD']);
+
+			$model = json_decode( file_get_contents( "php://input" ) );
+			// var_dump( $action );
+			// var_dump( $request_method );
+			$found_types = array();
+
+			$builtin_post_types = get_post_types( array(
+				'_builtin' => true
+			) );
+
+			$custom_post_types = get_post_types( array(
+				'_builtin' => false
+			) );
+
+			foreach( $builtin_post_types as $post_type ) {
+				$found_types[] = array(
+					'postType' => $post_type,
+					'source' => 'core'
+				);
+			}
+
+			foreach( $custom_post_types as $post_type ) {
+				$found_types[] = array(
+					'postType' => $post_type,
+					'source' => 'custom'
+				);
+			}
+
+			switch ( $request_method ) {
+				case 'get':
+					echo json_encode( array( 'postTypes' => $found_types ) );
+					break;
+				case 'post':
+					echo json_encode( array( 'post' => $model ) );
+					break;
+				case 'put':
+					echo json_encode( 'put' );
+					break;
+				case 'delete':
+					echo json_encode( array( 'delete' => $model ) );
+					break;
+				default:
+					// echo json_encode( $arrTodos );
+					break;
+			}
+
+			die();
 		}
-
-		
-		exit;
 	}
 
 }

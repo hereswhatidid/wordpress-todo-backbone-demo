@@ -34,17 +34,35 @@
 				<form action="#" class="form-horizontal">
 					<section id="todoapp">
 						<header id="header">
-							<h1><?php _e( 'Todos Demo', $this->Todo_Demo ); ?></h1>
+							<h1><?php _e( 'Todos Demo', $this->plugin_slug ); ?></h1>
 						</header>
 						<section id="main">
-							<ul class="list-group" id="todo-list"></ul>
+							<table class="table">
+								<thead>
+									<tr>
+										<th><?php _e( 'Post Type', $this->plugin_slug ); ?></th>
+										<th><?php _e( 'Source', $this->plugin_slug ); ?></th>
+										<th><?php _e( 'Controls', $this->plugin_slug ); ?></th>
+									</tr>
+								</thead>
+								<tbody id="posttype-list">
+								</tbody>
+							</table>
 						</section>
 					</section>
 				</form>
 			</div>
 		</div>
 		<script type="text/template" id="item-template">
-			<%- title %> <a href="#" class="destroy btn btn-danger">X</a>				
+			<td><%- postType %></td>
+			<td><%- source %></td>
+			<td>
+			<div class="btn-group">
+			<a href="#edit/<%- postType %>" class="btn btn-primary btn-xs"><?php _e( 'Edit', $this->plugin_slug ); ?></a>
+			<a href="#revert/<%- postType %>" class="btn btn-warning btn-xs"><?php _e( 'Revert', $this->plugin_slug ); ?></a>
+			<a href="#disable/<%- postType %>" class="btn btn-danger btn-xs"><?php _e( 'Disable', $this->plugin_slug ); ?></a>
+			</div>
+			</td>
 		</script>
 	</div>
 </div>
