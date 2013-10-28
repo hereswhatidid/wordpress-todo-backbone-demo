@@ -1,131 +1,259 @@
-/*global $ */
-/*jshint unused:false */
-( function( $ ) {
+﻿(function($) {
 
+    var postTypes = ContentToolkit.postTypes;
 
-var app = app || {};
+    //support legacy web servers
+    Backbone.emulateHTTP = true;
+    Backbone.emulateJSON = true;
 
-$(function () {
-	'use strict';
+    //define product model
+    var PostType = Backbone.Model.extend({
+        defaults: {
+            post_type: '',
+            label: '',
+            labels: {
+				name: '', // general name for the post type, usually plural. The same as, and overridden by $post_type_object->label
+				singular_name: '', // name for one object of this post type. Defaults to value of name
+				menu_name: '', // the menu name text. This string is the name to give menu items. Defaults to value of name
+				all_items: '', // the all items text used in the menu. Default is the Name label
+				add_new: '', // the add new text. The default is Add New for both hierarchical and non-hierarchical types. When internationalizing this string, please use a gettext context matching your post type. Example: _x('Add New', 'product');
+				add_new_item: '', // the add new item text. Default is Add New Post/Add New Page
+				edit_item: '', // the edit item text. Default is Edit Post/Edit Page
+				new_item: '', // the new item text. Default is New Post/New Page
+				view_item: '', // the view item text. Default is View Post/View Page
+				search_items: '', // the search items text. Default is Search Posts/Search Pages
+				not_found: '', // the not found text. Default is No posts found/No pages found
+				not_found_in_trash: '', // the not found in trash text. Default is No posts found in Trash/No pages found in Trash
+				parent_item_colon: '' // the parent text. This string isn't used on non-hierarchical types. In hierarchical ones the default is Parent Page
+            },
+            description: '', // A short descriptive summary of what the post type is.
+            public: false, // Whether a post type is intended to be used publicly either via the admin interface or by front-end users.
+            exclude_from_search: true, // Whether to exclude posts with this post type from front end search results.
+            publicly_queryable: false, // Whether queries can be performed on the front end as part of parse_request().
+            source: 'core'
+        },
+        url: function() {
+			return ajaxurl + '?action=edit_posttype&post_type=' + this.get( 'post_type' );
+        }
+    });
 
-	app.PostType = Backbone.Model.extend({
-		defaults: {
-			postType: '',
-			source: false
-		},
+    //define directory collection
+    var PostTypesCollection = Backbone.Collection.extend({
+        model: PostType
+    });
 
-		idAttribute: 'id'
-	});
+    //define individual contact view
+    var PostTypeView = Backbone.View.extend({
+        tagName: 'article',
+        className: 'posttype-container',
+        template: _.template( $( '#postTypeTemplate' ).html() ),
+        editTemplate: _.template( $( '#postTypeEditTemplate' ).html() ),
 
-	var PostTypes = Backbone.Collection.extend({
-		model: app.PostType,
+        render: function() {
+            this.$el.html( this.template( this.model.toJSON() ) );
+            return this;
+        },
 
-		params: {
-			'action': 'todos'
-		},
+        events: {
+            'click button.delete': 'deletePostType',
+            'click button.edit': 'editPostType',
+            'click button.save': 'saveEdits',
+            'click button.cancel': 'cancelEdit'
+        },
 
-		url: function() {
-			return ajaxurl + '?' + $.param( this.params );
-		},
+        //delete a contact
+        deletePostType: function() {
+            //remove model
+            this.model.destroy();
 
-		parse: function( resp, xhr ) {
-			// console.log( 'Response: ', resp, xhr );
-			return resp.postTypes;
-		}
+            //remove view from page
+            this.remove();
+        },
 
-	});
+        //switch contact to edit mode
+        editPostType: function() {
+            this.$el.html( this.editTemplate( this.model.toJSON() ) );
 
-	app.todos = new PostTypes();
+            this.$el.find('input[type="hidden"]').remove();
+        },
 
-	app.PostTypeView = Backbone.View.extend({
-		tagName:  'tr',
+        saveEdits: function(e) {
+            e.preventDefault();
 
-		// className: 'list-group-item',
+            var formData = {},
+                prev = this.model.previousAttributes();
 
-		template: _.template($('#item-template').html()),
+            //get form data
+            $(e.target).closest( 'form' ).find( ':input' ).not( 'button' ).each(function() {
+                var el = $(this);
+                formData[el.attr( 'class' )] = el.val();
+            });
 
-		events: {
-			'click .destroy': 'clear'
-		},
+            //update model and save to server
+            this.model.set(formData).save();
 
-		initialize: function () {
-			this.listenTo(this.model, 'destroy', this.remove);
-		},
-		render: function () {
-			this.$el.html( this.template( this.model.toJSON() ) );
-			return this;
-		},
+            //render view
+            this.render();
 
-		clear: function () {
-			this.model.destroy();
-		}
-	});
+            //update contacts array
+            _.each( postTypes, function( postType ) {
+                if ( _.isEqual( postType, prev ) ) {
+                    postTypes.splice( _.indexOf( postTypes, postType ), 1, formData );
+                }
+            });
+        },
 
-	app.AppView = Backbone.View.extend({
+        cancelEdit: function( e ) {
+        	e.preventDefault();
+            this.render();
+        }
+    });
 
-		el: '#todoapp',
+    //define master view
+    var PostTypesApp = Backbone.View.extend({
+        el: $( '#post-types' ),
 
-		initialize: function () {
+        initialize: function() {
+            this.collection = new PostTypesCollection( postTypes );
 
-			this.$main = this.$('#main');
+            this.render();
+            this.$el.find( '#filter ').append(this.createSelect());
 
-			this.listenTo(app.todos, 'reset', this.addAll);
-			app.todos.fetch({reset: true});
-		},
-		render: function () {
-			if (app.todos.length) {
-				this.$main.show();
-			} else {
-				this.$main.hide();
-			}
-		},
+            this.on( 'change:filterSource', this.filterBySource, this);
+            this.collection.on( 'reset', this.render, this);
+            this.collection.on( 'add', this.renderPostType, this);
+            this.collection.on( 'remove', this.removePostType, this);
+        },
 
-		addOne: function (todo) {
-			var view = new app.PostTypeView({ model: todo });
-			$('#posttype-list').append(view.render().el);
-		},
+        render: function() {
+            this.$el.find( 'article' ).remove();
 
-		addAll: function () {
-			this.$('#posttype-list').html('');
-			app.todos.each(this.addOne, this);
-		}
-	});
+            _.each( this.collection.models, function( item ) {
+                this.renderPostType( item );
+            }, this);
+        },
 
-	var PostTypeRouter = Backbone.Router.extend({
-		routes: {
-			'': 'index',
-			'edit/:id': 'editPostType',
-			'disable/:id': 'disablePostType'
-		},
+        renderPostType: function(item) {
+            var postTypeView = new PostTypeView({
+                model: item
+            });
+            this.$el.append( postTypeView.render().el );
+        },
 
-		index: function() {
-			console.log( 'Index page!' );
-		},
+        getSources: function() {
+            return _.uniq( this.collection.pluck( 'source' ), false, function( source ) {
+                return source.toLowerCase();
+            });
+        },
 
-		editPostType: function ( postType ) {
-			// Set the current filter to be used
-			app.PostTypeID = postType || '';
+        createSelect: function() {
+            var filter = this.$el.find("#filter"),
+                select = $( '<select/>', {
+                    html: '<option value="all">All</option>'
+                });
 
-			console.log( 'Edit post type: ', app.PostTypeID );
-			
-		},
+            _.each( this.getSources(), function( item ) {
+                var option = $( '<option/>', {
+                    value: item,
+                    text: item
+                }).appendTo( select );
+            });
 
-		disablePostType: function ( postType ) {
-			// Set the current filter to be used
-			app.PostTypeID = postType || '';
+            return select;
+        },
 
-			console.log( 'Disable post type: ', app.PostTypeID );
-			
-		}
-	});
+        //add ui events
+        events: {
+            'change #filter select': 'setFilter',
+            'click #add': 'addPostType',
+            'click #showForm': 'showForm'
+        },
 
-	app.PostTypeRouter = new PostTypeRouter();
-	Backbone.history.start({
+        //Set filter property and fire change event
+        setFilter: function( e ) {
+            this.filterType = e.currentTarget.value;
+            this.trigger( 'change:filterType' );
+        },
+
+        //filter the view
+        filterBySource: function() {
+            if ( this.filterType === 'all' ) {
+                this.collection.reset( postTypes );
+                postTypesRouter.navigate( 'filter/all' );
+            } else {
+                this.collection.reset( postTypes, { silent: true } );
+
+                var filterType = this.filterType,
+                    filtered = _.filter( this.collection.models, function(item) {
+                        return item.get( 'type' ).toLowerCase() === filterType;
+                    });
+
+                this.collection.reset( filtered );
+
+                postTypesRouter.navigate( 'filter/' + filterType );
+            }
+        },
+
+        //add a new contact
+        addPostType: function( e ) {
+            e.preventDefault();
+
+            var formData = {};
+            $( '#addPostType' ).children( 'input' ).each( function( i, el ) {
+                if ( $( el ).val() !== '' ) {
+                    formData[el.id] = $( el ).val();
+                }
+            });
+
+            //update data store
+            postTypes.push( formData );
+
+            //re-render select if new type is unknown
+            if ( _.indexOf( this.getSources(), formData.type ) === -1 ) {
+                this.$el.find("#filter").find("select").remove().end().append(this.createSelect());
+            }
+
+            //add to collection and save to server
+            this.collection.create( formData );
+        },
+
+        removePostType: function(removedModel) {
+            var removed = removedModel.attributes;
+
+            //remove from contacts array
+            _.each( postTypes, function( postType ) {
+                if ( _.isEqual( postType, removed ) ) {
+                    postTypes.splice( _.indexOf( postTypes, postType ), 1 );
+                }
+            });
+        },
+
+        showForm: function() {
+            this.$el.find( '#addPostType' ).slideToggle();
+        }
+    });
+
+    //add routing
+    var PostTypesRouter = Backbone.Router.extend({
+        routes: {
+            'filter/:type': 'urlFilter'
+        },
+
+        urlFilter: function(type) {
+            postTypes.filterType = type;
+            postTypes.trigger( 'change:filterType' );
+        }
+    });
+
+    //create instance of master view
+    var postTypesApp = new PostTypesApp();
+
+    //create router instance
+    var postTypesRouter = new PostTypesRouter();
+
+    //start history service
+    Backbone.history.start({
 		root: '/wp-admin/options-general.php?page=todo-demo'
-	});
+    });
 
-	new app.AppView();
-
-
-});
-})( jQuery );
+} (jQuery));

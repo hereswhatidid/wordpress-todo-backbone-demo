@@ -127,7 +127,8 @@ class Todo_Demo_Admin {
 
 		$screen = get_current_screen();
 		if ( $this->plugin_screen_hook_suffix == $screen->id ) {
-		wp_enqueue_script( $this->plugin_slug . '-todomvc-script', plugins_url( 'js/app.js', __FILE__ ), array( 'jquery', 'backbone', 'underscore' ), Todo_Demo::VERSION );
+		wp_enqueue_script( $this->plugin_slug . '-todomvc-script', plugins_url( 'js/app.js', __FILE__ ), array( 'jquery', 'backbone', 'underscore' ), Todo_Demo::VERSION, true );
+		wp_localize_script( $this->plugin_slug . '-todomvc-script', 'ContentToolkit', array( 'postTypes' => $this->list_post_types() ) );
 		}
 
 	}
@@ -172,6 +173,34 @@ class Todo_Demo_Admin {
 			$links
 		);
 
+	}
+
+	public function list_post_types() {
+		$found_types = array();
+
+		$builtin_post_types = get_post_types( array(
+			'_builtin' => true
+		) );
+
+		$custom_post_types = get_post_types( array(
+			'_builtin' => false
+		) );
+
+		foreach( $builtin_post_types as $post_type ) {
+			$found_types[] = array(
+				'post_type' => $post_type,
+				'source' => 'core'
+			);
+		}
+
+		foreach( $custom_post_types as $post_type ) {
+			$found_types[] = array(
+				'post_type' => $post_type,
+				'source' => 'custom'
+			);
+		}
+
+		return $found_types;
 	}
 
 	public function ajax_get_todos() {
