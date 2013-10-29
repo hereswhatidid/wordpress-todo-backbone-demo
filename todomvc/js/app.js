@@ -44,8 +44,7 @@
 
     //define individual contact view
     var PostTypeView = Backbone.View.extend({
-        tagName: 'article',
-        className: 'posttype-container',
+        tagName: 'tr',
         template: _.template( $( '#postTypeTemplate' ).html() ),
         editTemplate: _.template( $( '#postTypeEditTemplate' ).html() ),
 
@@ -55,10 +54,10 @@
         },
 
         events: {
-            'click button.delete': 'deletePostType',
-            'click button.edit': 'editPostType',
-            'click button.save': 'saveEdits',
-            'click button.cancel': 'cancelEdit'
+            'click a.delete': 'deletePostType',
+            'click a.edit': 'editPostType',
+            'click a.save': 'saveEdits',
+            'click a.cancel': 'cancelEdit'
         },
 
         //delete a contact
@@ -126,7 +125,7 @@
         },
 
         render: function() {
-            this.$el.find( 'article' ).remove();
+            this.$el.find( '#post-list' ).find( 'article' ).remove();
 
             _.each( this.collection.models, function( item ) {
                 this.renderPostType( item );
@@ -137,7 +136,7 @@
             var postTypeView = new PostTypeView({
                 model: item
             });
-            this.$el.append( postTypeView.render().el );
+            this.$el.find( '#post-list' ).append( postTypeView.render().el );
         },
 
         getSources: function() {

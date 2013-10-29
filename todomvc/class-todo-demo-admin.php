@@ -187,17 +187,17 @@ class Todo_Demo_Admin {
 		) );
 
 		foreach( $builtin_post_types as $post_type ) {
-			$found_types[] = array(
-				'post_type' => $post_type,
-				'source' => 'core'
-			);
+			$post_object = (array) get_post_type_object( $post_type );
+			$post_object['post_type'] = $post_type;
+			$post_object['source'] = 'core';
+			$found_types[] = $post_object;
 		}
 
 		foreach( $custom_post_types as $post_type ) {
-			$found_types[] = array(
-				'post_type' => $post_type,
-				'source' => 'custom'
-			);
+			$post_object = (array) get_post_type_object( $post_type );
+			$post_object['post_type'] = $post_type;
+			$post_object['source'] = 'custom';
+			$found_types[] = $post_object;
 		}
 
 		return $found_types;

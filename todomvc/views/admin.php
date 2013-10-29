@@ -66,13 +66,27 @@
                     <button id="add">Add</button>
                 </form>
             </header>
+
+            <table>
+            	<thead>
+            		<tr>
+            			<th><?php _e( 'Post Type', $this->plugin_slug ); ?></th>
+            			<th><?php _e( 'Source', $this->plugin_slug ); ?></th>
+            			<th></th>
+            		</tr>
+            	</thead>
+            	<tbody id="post-list"></tbody>
+            </table>
         </div>
         <script id="postTypeTemplate" type="text/template">
-			<h1><%- label %></h1>
-			<h2><%- post_type %></h2>
-			<h5><%- source %></h5>
-            <button class="delete"><?php _e( 'Delete', $this->plugin_slug ); ?></button>
-            <button class="edit"><?php _e( 'Edit', $this->plugin_slug ); ?></button>
+        	<td><%- label %></td>
+        	<td><%- source %></td>
+        	<td>
+        		<div class="btn-group">
+        			<a href="#" class="btn btn-xs btn-success edit"><?php _e( 'Edit', $this->plugin_slug ); ?></a>
+        			<a href="#" class="btn btn-xs btn-danger delete"><?php _e( 'Delete', $this->plugin_slug ); ?></a>
+        		</div>
+        	</td>
         </script>
         <script id="postTypeEditTemplate" type="text/template">
             <form action="#">
