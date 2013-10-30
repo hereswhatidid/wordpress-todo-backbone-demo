@@ -30,7 +30,7 @@
 
 	<div class="bootstrap-wrapper">
         <div id="post-types">
-            <header>
+            <header class="hidden">
                 <div id="filter"><label>Show me:</label></div>
                 <a id="showForm" href="#">Add new post type</a>
                 <form id="addPostType" action="#">
@@ -66,12 +66,22 @@
                     <button id="add">Add</button>
                 </form>
             </header>
+			<div class="page-header">
+				<h2><?php _e( 'Custom Post Types', $this->plugin_slug ); ?> <small><?php _e( 'View All', $this->plugin_slug ); ?></small></h2>
+			</div>
+			<div class="panel panel-default">
+				<div class="panel-body">
 
-            <table>
+				</div>
+			</div>
+			<div id="edit-form-holder"></div>
+            <table class="table table-hover table-bordered">
             	<thead>
             		<tr>
+            			<th><input type="checkbox"></th>
             			<th><?php _e( 'Post Type', $this->plugin_slug ); ?></th>
             			<th><?php _e( 'Source', $this->plugin_slug ); ?></th>
+            			<th><?php _e( 'Status', $this->plugin_slug ); ?></th>
             			<th></th>
             		</tr>
             	</thead>
@@ -79,10 +89,12 @@
             </table>
         </div>
         <script id="postTypeTemplate" type="text/template">
+        	<td><input type="checkbox"></td>
         	<td><%- label %></td>
         	<td><%- source %></td>
+        	<td><span class="label label-default">Unmodified</span></td>
         	<td>
-        		<div class="btn-group">
+        		<div class="btn-group pull-right">
         			<a href="#" class="btn btn-xs btn-success edit"><?php _e( 'Edit', $this->plugin_slug ); ?></a>
         			<a href="#" class="btn btn-xs btn-danger delete"><?php _e( 'Delete', $this->plugin_slug ); ?></a>
         		</div>
@@ -91,6 +103,7 @@
         <script id="postTypeEditTemplate" type="text/template">
             <form action="#">
                 <input id="source" type="hidden" value="<%- source %>" />
+            	<label for="post_type"><?php _e( 'Post Type', $this->plugin_slug ); ?> <a href="#" data-toggle="popover" data-placement="top" data-content="<?php _e( 'Post type name. (max. 20 characters, can not contain capital letters or spaces)', $this->plugin_slug ); ?>">?</a></label>
 	            <input type="text" name="post_type" value="<%- post_type %>">
 	            <input type="text" name="label" value="<%- label %>">
 				<input type="text" name="labels[name]" value="<%- labels.name %>">

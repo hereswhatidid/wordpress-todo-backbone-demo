@@ -127,8 +127,10 @@ class Todo_Demo_Admin {
 
 		$screen = get_current_screen();
 		if ( $this->plugin_screen_hook_suffix == $screen->id ) {
-		wp_enqueue_script( $this->plugin_slug . '-todomvc-script', plugins_url( 'js/app.js', __FILE__ ), array( 'jquery', 'backbone', 'underscore' ), Todo_Demo::VERSION, true );
-		wp_localize_script( $this->plugin_slug . '-todomvc-script', 'ContentToolkit', array( 'postTypes' => $this->list_post_types() ) );
+			wp_enqueue_script( $this->plugin_slug . '-todomvc-marionette', plugins_url( 'js/vendor/backbone.marionette.js', __FILE__ ), array( 'backbone' ), Todo_Demo::VERSION, true );
+			wp_enqueue_script( $this->plugin_slug . '-todomvc-bootstrap', plugins_url( 'js/vendor/bootstrap.js', __FILE__ ), array( 'jquery' ), Todo_Demo::VERSION, true );
+			wp_enqueue_script( $this->plugin_slug . '-todomvc-script', plugins_url( 'js/app.js', __FILE__ ), array( 'jquery', 'backbone', 'underscore', $this->plugin_slug . '-todomvc-bootstrap' ), Todo_Demo::VERSION, true );
+			wp_localize_script( $this->plugin_slug . '-todomvc-script', 'ContentToolkit', array( 'postTypes' => $this->list_post_types() ) );
 		}
 
 	}
